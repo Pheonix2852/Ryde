@@ -1,11 +1,28 @@
+import { Show, useClerk, useUser } from "@clerk/expo";
+import { router } from "expo-router";
 import React from "react";
-import { Text, View } from "react-native";
+
+import { Pressable, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const home = () => {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
   return (
-    <View>
-      <Text>home</Text>
-    </View>
+    <SafeAreaView>
+      <Show when="signed-in">
+        <Text>Hello {user?.emailAddresses[0].emailAddress}</Text>
+        <Pressable
+          onPress={async () => {
+            await signOut();
+            router.replace("/(auth)/welcome");
+          }}
+        >
+          <Text>Sign out</Text>
+        </Pressable>
+      </Show>
+    </SafeAreaView>
   );
 };
 
