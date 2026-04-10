@@ -65,8 +65,7 @@ const Map = () => {
     destinationLongitude,
   } = useLocationStore();
 
-  const selectedDriver = useDriverStore((state) => state.selectedDriver);
-  const setSelectedDriver = useDriverStore((state) => state.setSelectedDriver);
+  const { selectedDriver, setDrivers } = useDriverStore();
   const [markers, setMarkers] = useState<MarkerData[]>([]);
 
   const region = calculateRegion({
@@ -77,6 +76,7 @@ const Map = () => {
   });
 
   useEffect(() => {
+    setDrivers(drivers);
     if (Array.isArray(drivers)) {
       if (!userLatitude || !userLongitude) return;
 
@@ -109,7 +109,7 @@ const Map = () => {
               longitude: marker.longitude,
             }}
             title={marker.title}
-            onPress={() => setSelectedDriver(marker.id)}
+            onPress={() => selectedDriver(marker.id)}
             image={
               selectedDriver === marker.id ? icons.selectedMarker : icons.marker
             }
