@@ -5,7 +5,7 @@ import { fetchAPI } from "@/lib/fetch";
 import { useAuth, useSignUp } from "@clerk/expo";
 import { Image } from "expo-image";
 import { type Href, Link, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -164,6 +164,7 @@ const SignUp = () => {
             <InputField
               label="Name"
               placeholder="Enter Your Name"
+              placeholderTextColor="gray"
               icon={icons.person}
               value={form.name}
               onChangeText={(value) => setForm({ ...form, name: value })}
@@ -172,6 +173,7 @@ const SignUp = () => {
             <InputField
               label="Email"
               placeholder="Enter Your Email"
+              placeholderTextColor="gray"
               icon={icons.email}
               autoCapitalize="none"
               keyboardType="email-address"
@@ -183,6 +185,7 @@ const SignUp = () => {
             <InputField
               label="Password"
               placeholder="Enter Your Password"
+              placeholderTextColor="gray"
               icon={icons.lock}
               secureTextEntry={true}
               textContentType="password"

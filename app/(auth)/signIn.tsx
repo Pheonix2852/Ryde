@@ -4,7 +4,7 @@ import OAuth from "@/components/OAuth";
 import { useSignIn } from "@clerk/expo";
 import { Image } from "expo-image";
 import { type Href, Link, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   Pressable,
@@ -159,72 +159,76 @@ const SignIn = () => {
   }
 
   return (
-    <ScrollView className="flex-1 bg-white">
-      <View className="flex-1 bg-white">
-        <View className="relative w-full h-[250px]">
-          <Image
-            source={images.signUpCar}
-            className="z-0 w-full"
-            style={{ height: 250 }}
-          />
-          <Text className="text-3xl text-black font-JakartaSemiBold absolute bottom-5 left-5">
-            Welcome👋
-          </Text>
-        </View>
-
-        <View className="p-5">
-          <InputField
-            label="Email"
-            placeholder="Enter Your Email"
-            icon={icons.email}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            value={form.email}
-            onChangeText={(value) => setForm({ ...form, email: value })}
-          />
-
-          {errors?.fields?.identifier && (
-            <Text className="text-red-500 mt-1 text-sm">
-              {errors.fields.identifier.message}
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+      <ScrollView className="flex-1 bg-white">
+        <View className="flex-1 bg-white">
+          <View className="relative w-full h-[250px]">
+            <Image
+              source={images.signUpCar}
+              className="z-0 w-full"
+              style={{ height: 250 }}
+            />
+            <Text className="text-3xl text-black font-JakartaSemiBold absolute bottom-5 left-5">
+              Welcome👋
             </Text>
-          )}
+          </View>
 
-          <InputField
-            label="Password"
-            placeholder="Enter Your Password"
-            icon={icons.lock}
-            secureTextEntry={true}
-            textContentType="password"
-            value={form.password}
-            onChangeText={(value) => setForm({ ...form, password: value })}
-          />
+          <View className="p-5">
+            <InputField
+              label="Email"
+              placeholder="Enter Your Email"
+              placeholderTextColor="gray"
+              icon={icons.email}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              value={form.email}
+              onChangeText={(value) => setForm({ ...form, email: value })}
+            />
 
-          {errors?.fields?.password && (
-            <Text className="text-red-500 mt-1 text-sm">
-              {errors.fields.password.message}
-            </Text>
-          )}
+            {errors?.fields?.identifier && (
+              <Text className="text-red-500 mt-1 text-sm">
+                {errors.fields.identifier.message}
+              </Text>
+            )}
 
-          <CustomButton
-            title={isFetching ? "Signing In..." : "Sign In"}
-            onPress={onSignInPress}
-            className="mt-6"
-            disabled={!form.email || !form.password || isFetching}
-          />
+            <InputField
+              label="Password"
+              placeholder="Enter Your Password"
+              placeholderTextColor="gray"
+              icon={icons.lock}
+              secureTextEntry={true}
+              textContentType="password"
+              value={form.password}
+              onChangeText={(value) => setForm({ ...form, password: value })}
+            />
 
-          <OAuth />
+            {errors?.fields?.password && (
+              <Text className="text-red-500 mt-1 text-sm">
+                {errors.fields.password.message}
+              </Text>
+            )}
 
-          <Link
-            href="/(auth)/signUp"
-            className="text-lg text-center text-general-200 mt-10"
-          >
-            <Text>New User?</Text>
-            <Text className="text-primary-500"> Create an account</Text>
-          </Link>
+            <CustomButton
+              title={isFetching ? "Signing In..." : "Sign In"}
+              onPress={onSignInPress}
+              className="mt-6"
+              disabled={!form.email || !form.password || isFetching}
+            />
+
+            <OAuth />
+
+            <Link
+              href="/(auth)/signUp"
+              className="text-lg text-center text-general-200 mt-10"
+            >
+              <Text>New User?</Text>
+              <Text className="text-primary-500"> Create an account</Text>
+            </Link>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
