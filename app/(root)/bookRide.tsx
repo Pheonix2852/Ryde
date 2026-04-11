@@ -1,10 +1,10 @@
 import Payments from "@/components/Payments";
 import RideLayout from "@/components/RideLayout";
+import StripeAppProvider from "@/components/StripeAppProvider";
 import { icons } from "@/constants";
 import { formatTime } from "@/lib/utils";
 import { useDriverStore, useLocationStore } from "@/store";
 import { useUser } from "@clerk/expo";
-import { StripeProvider } from "@stripe/stripe-react-native";
 import { Image, Text, View } from "react-native";
 
 const bookRide = () => {
@@ -17,11 +17,7 @@ const bookRide = () => {
   )[0];
 
   return (
-    <StripeProvider
-      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_API_KEY!}
-      merchantIdentifier="merchant.identifier"
-      urlScheme="ryde"
-    >
+    <StripeAppProvider>
       <RideLayout title="Book Ride" snapPoints={["40%", "85%"]}>
         <>
           <Text className="text-xl font-JakartaSemiBold mb-3">
@@ -100,7 +96,7 @@ const bookRide = () => {
           />
         </>
       </RideLayout>
-    </StripeProvider>
+    </StripeAppProvider>
   );
 };
 

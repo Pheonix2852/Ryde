@@ -12,6 +12,17 @@ export async function POST(request: Request) {
       );
     }
 
+    const existingUser = await sql`
+      SELECT id, name, email, clerk_id
+      FROM users
+      WHERE clerk_id = ${clerk_id}
+      LIMIT 1
+    `;
+
+    if (existingUser.length > 0) {
+      return Response.json({ data: existingUser[0] }, { status: 200 });
+    }
+
     const response = await sql`
     INSERT INTO users(
         name,
@@ -25,9 +36,9 @@ export async function POST(request: Request) {
     )
   `;
 
-    return new Response(JSON.stringify({ data: response }), { status: 201 });
+    return Response.json({ data: response }, { status: 201 });
   } catch (error) {
     console.log(error);
-    return Response.json({ error: error }, { status: 500 });
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

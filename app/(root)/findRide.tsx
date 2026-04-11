@@ -37,11 +37,13 @@ const findRide = () => {
         />
       </View>
 
-      <CustomButton
-        title="Find Now"
-        onPress={() => router.push("/(root)/confirmRide")}
-        className="mt-5 w-11/12"
-      />
+      <View className="items-center">
+        <CustomButton
+          title="Find Now"
+          onPress={() => router.push("/(root)/confirmRide")}
+          className="mt-5 w-11/12"
+        />
+      </View>
     </RideLayout>
   );
 };

@@ -94,6 +94,7 @@ const Map = () => {
   return (
     <View style={styles.container}>
       <MapView
+      className="rounded-3xl"
         ref={mapRef}
         provider={PROVIDER_DEFAULT}
         style={styles.map}
@@ -185,6 +186,8 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
     height: "100%",
+    borderRadius: 50
+
   },
   map: {
     width: "100%",
