@@ -1,6 +1,59 @@
 import { Driver, MarkerData } from "@/types/type";
 
 const directionsAPI = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+const DEFAULT_DRIVER_TIME_MINUTES = 5;
+const DEFAULT_DRIVER_PRICE = (DEFAULT_DRIVER_TIME_MINUTES * 0.5).toFixed(2);
+
+type DirectionsResponse = {
+  status?: string;
+  error_message?: string;
+  routes?: Array<{
+    legs?: Array<{
+      duration?: {
+        value?: number;
+      };
+    }>;
+  }>;
+};
+
+const getDirectionsDurationInSeconds = async ({
+  originLatitude,
+  originLongitude,
+  destinationLatitude,
+  destinationLongitude,
+}: {
+  originLatitude: number;
+  originLongitude: number;
+  destinationLatitude: number;
+  destinationLongitude: number;
+}): Promise<number | null> => {
+  if (!directionsAPI) {
+    return null;
+  }
+
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/directions/json?origin=${originLatitude},${originLongitude}&destination=${destinationLatitude},${destinationLongitude}&key=${directionsAPI}`,
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as DirectionsResponse;
+  const durationValue = data.routes?.[0]?.legs?.[0]?.duration?.value;
+
+  if (typeof durationValue !== "number") {
+    return null;
+  }
+
+  return durationValue;
+};
+
+const withFallbackTimeAndPrice = (marker: MarkerData): MarkerData => ({
+  ...marker,
+  time: DEFAULT_DRIVER_TIME_MINUTES,
+  price: DEFAULT_DRIVER_PRICE,
+});
 
 export const generateMarkersFromData = ({
   data,
@@ -14,8 +67,11 @@ export const generateMarkersFromData = ({
   return data.map((driver) => {
     const latOffset = (Math.random() - 0.5) * 0.01; // Random offset between -0.005 and 0.005
     const lngOffset = (Math.random() - 0.5) * 0.01; // Random offset between -0.005 and 0.005
+    const markerId =
+      (driver as Driver & { id?: number }).id ?? driver.driver_id;
 
     return {
+      id: markerId,
       latitude: userLatitude + latOffset,
       longitude: userLongitude + lngOffset,
       title: `${driver.first_name} ${driver.last_name}`,
@@ -35,7 +91,7 @@ export const calculateRegion = ({
   destinationLatitude?: number | null;
   destinationLongitude?: number | null;
 }) => {
-  if (!userLatitude || !userLongitude) {
+  if (userLatitude == null || userLongitude == null) {
     return {
       latitude: 37.78825,
       longitude: -122.4324,
@@ -44,7 +100,7 @@ export const calculateRegion = ({
     };
   }
 
-  if (!destinationLatitude || !destinationLongitude) {
+  if (destinationLatitude == null || destinationLongitude == null) {
     return {
       latitude: userLatitude,
       longitude: userLongitude,
@@ -86,29 +142,39 @@ export const calculateDriverTimes = async ({
   destinationLongitude: number | null;
 }) => {
   if (
-    !userLatitude ||
-    !userLongitude ||
-    !destinationLatitude ||
-    !destinationLongitude
-  )
-    return;
+    userLatitude == null ||
+    userLongitude == null ||
+    destinationLatitude == null ||
+    destinationLongitude == null
+  ) {
+    return [];
+  }
 
   try {
+    const userToDestinationDuration = await getDirectionsDurationInSeconds({
+      originLatitude: userLatitude,
+      originLongitude: userLongitude,
+      destinationLatitude,
+      destinationLongitude,
+    });
+
+    if (userToDestinationDuration == null) {
+      return markers.map(withFallbackTimeAndPrice);
+    }
+
     const timesPromises = markers.map(async (marker) => {
-      const responseToUser = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${marker.latitude},${marker.longitude}&destination=${userLatitude},${userLongitude}&key=${directionsAPI}`,
-      );
-      const dataToUser = await responseToUser.json();
-      const timeToUser = dataToUser.routes[0].legs[0].duration.value; // Time in seconds
+      const timeToUser = await getDirectionsDurationInSeconds({
+        originLatitude: marker.latitude,
+        originLongitude: marker.longitude,
+        destinationLatitude: userLatitude,
+        destinationLongitude: userLongitude,
+      });
 
-      const responseToDestination = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${userLatitude},${userLongitude}&destination=${destinationLatitude},${destinationLongitude}&key=${directionsAPI}`,
-      );
-      const dataToDestination = await responseToDestination.json();
-      const timeToDestination =
-        dataToDestination.routes[0].legs[0].duration.value; // Time in seconds
+      if (timeToUser == null) {
+        return withFallbackTimeAndPrice(marker);
+      }
 
-      const totalTime = (timeToUser + timeToDestination) / 60; // Total time in minutes
+      const totalTime = (timeToUser + userToDestinationDuration) / 60; // Total time in minutes
       const price = (totalTime * 0.5).toFixed(2); // Calculate price based on time
 
       return { ...marker, time: totalTime, price };
@@ -117,5 +183,6 @@ export const calculateDriverTimes = async ({
     return await Promise.all(timesPromises);
   } catch (error) {
     console.error("Error calculating driver times:", error);
+    return markers.map(withFallbackTimeAndPrice);
   }
 };
