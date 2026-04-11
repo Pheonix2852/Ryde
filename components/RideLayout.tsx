@@ -41,7 +41,7 @@ const RideLayout = ({
           snapPoints={snapPoints || ["40%", "80%"]}
           index={0}
         >
-          <BottomSheetView className="p-5">{children}</BottomSheetView>
+          <BottomSheetView className="p-5 flex-1">{children}</BottomSheetView>
         </BottomSheet>
       </View>
     </GestureHandlerRootView>

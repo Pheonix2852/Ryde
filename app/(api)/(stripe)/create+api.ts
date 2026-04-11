@@ -16,8 +16,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const amountInCents = Math.round(Number(amount) * 100);
-    if (!Number.isFinite(amountInCents)) {
+    const amountInPaise = Math.round(Number(amount) * 100);
+    if (!Number.isFinite(amountInPaise)) {
       return Response.json(
         { error: "Invalid amount" },
         {
@@ -26,10 +26,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (amountInCents < 50) {
+    if (amountInPaise < 50) {
       return Response.json(
         {
-          error: "Amount is too low. Minimum charge is $0.50.",
+          error: "Amount is too low. Minimum charge is Rs0.50.",
         },
         { status: 400 },
       );
@@ -41,8 +41,8 @@ export async function POST(request: Request) {
       (await stripe.customers.create({ name, email }));
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: "usd",
+      amount: amountInPaise,
+      currency: "inr",
       customer: customer.id,
       automatic_payment_methods: {
         enabled: true,

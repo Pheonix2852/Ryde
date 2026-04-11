@@ -1,8 +1,12 @@
 import { Driver, MarkerData } from "@/types/type";
 
 const directionsAPI = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+const RATE_INR_PER_KM = 13;
 const DEFAULT_DRIVER_TIME_MINUTES = 5;
-const DEFAULT_DRIVER_PRICE = (DEFAULT_DRIVER_TIME_MINUTES * 0.5).toFixed(2);
+const DEFAULT_DRIVER_DISTANCE_KM = 1;
+const DEFAULT_DRIVER_PRICE = (
+  DEFAULT_DRIVER_DISTANCE_KM * RATE_INR_PER_KM
+).toFixed(2);
 
 type DirectionsResponse = {
   status?: string;
@@ -12,11 +16,14 @@ type DirectionsResponse = {
       duration?: {
         value?: number;
       };
+      distance?: {
+        value?: number;
+      };
     }>;
   }>;
 };
 
-const getDirectionsDurationInSeconds = async ({
+const getDirectionsMetrics = async ({
   originLatitude,
   originLongitude,
   destinationLatitude,
@@ -26,7 +33,7 @@ const getDirectionsDurationInSeconds = async ({
   originLongitude: number;
   destinationLatitude: number;
   destinationLongitude: number;
-}): Promise<number | null> => {
+}): Promise<{ durationSeconds: number; distanceMeters: number } | null> => {
   if (!directionsAPI) {
     return null;
   }
@@ -40,13 +47,18 @@ const getDirectionsDurationInSeconds = async ({
   }
 
   const data = (await response.json()) as DirectionsResponse;
-  const durationValue = data.routes?.[0]?.legs?.[0]?.duration?.value;
+  const leg = data.routes?.[0]?.legs?.[0];
+  const durationValue = leg?.duration?.value;
+  const distanceValue = leg?.distance?.value;
 
-  if (typeof durationValue !== "number") {
+  if (typeof durationValue !== "number" || typeof distanceValue !== "number") {
     return null;
   }
 
-  return durationValue;
+  return {
+    durationSeconds: durationValue,
+    distanceMeters: distanceValue,
+  };
 };
 
 const withFallbackTimeAndPrice = (marker: MarkerData): MarkerData => ({
@@ -151,31 +163,38 @@ export const calculateDriverTimes = async ({
   }
 
   try {
-    const userToDestinationDuration = await getDirectionsDurationInSeconds({
+    const userToDestinationMetrics = await getDirectionsMetrics({
       originLatitude: userLatitude,
       originLongitude: userLongitude,
       destinationLatitude,
       destinationLongitude,
     });
 
-    if (userToDestinationDuration == null) {
+    if (userToDestinationMetrics == null) {
       return markers.map(withFallbackTimeAndPrice);
     }
 
     const timesPromises = markers.map(async (marker) => {
-      const timeToUser = await getDirectionsDurationInSeconds({
+      const driverToUserMetrics = await getDirectionsMetrics({
         originLatitude: marker.latitude,
         originLongitude: marker.longitude,
         destinationLatitude: userLatitude,
         destinationLongitude: userLongitude,
       });
 
-      if (timeToUser == null) {
+      if (driverToUserMetrics == null) {
         return withFallbackTimeAndPrice(marker);
       }
 
-      const totalTime = (timeToUser + userToDestinationDuration) / 60; // Total time in minutes
-      const price = (totalTime * 0.5).toFixed(2); // Calculate price based on time
+      const totalTime =
+        (driverToUserMetrics.durationSeconds +
+          userToDestinationMetrics.durationSeconds) /
+        60;
+      const totalDistanceKm =
+        (driverToUserMetrics.distanceMeters +
+          userToDestinationMetrics.distanceMeters) /
+        1000;
+      const price = (totalDistanceKm * RATE_INR_PER_KM).toFixed(2);
 
       return { ...marker, time: totalTime, price };
     });

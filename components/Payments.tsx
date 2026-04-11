@@ -34,7 +34,10 @@ const Payments = ({
   const { userId } = useAuth();
 
   const parsedAmount = Number(amount || "0");
-  const amountInCents = Math.max(50, Math.round(parsedAmount * 100));
+  const amountInPaise = Math.max(50, Math.round(parsedAmount * 100));
+  const fareInRupees = Number.isFinite(parsedAmount)
+    ? Number(parsedAmount.toFixed(2))
+    : 0;
 
   const initializePaymentSheet = useCallback(
     async ({
@@ -51,8 +54,8 @@ const Payments = ({
         merchantDisplayName: "Ryde",
         intentConfiguration: {
           mode: {
-            amount: amountInCents,
-            currencyCode: "USD",
+            amount: amountInPaise,
+            currencyCode: "INR",
           },
           confirmHandler: async (_, __, intentCreationCallback) => {
             try {
@@ -66,7 +69,7 @@ const Payments = ({
                 body: JSON.stringify({
                   name: fullName || email.split("@")[0],
                   email,
-                  amount: amountInCents / 100,
+                  amount: amountInPaise / 100,
                 }),
               });
 
@@ -102,7 +105,7 @@ const Payments = ({
 
       return true;
     },
-    [amountInCents, email, fullName, initPaymentSheet, parsedAmount],
+    [amountInPaise, email, fullName, initPaymentSheet, parsedAmount],
   );
 
   const createRide = useCallback(async () => {
@@ -124,17 +127,17 @@ const Payments = ({
         destination_longitude: destinationLongitude,
         ride_time: Math.round(rideTime),
         payment_status: "paid",
-        fare_price: amountInCents,
+        fare_price: fareInRupees,
         driver_id: driverId,
         user_id: userId,
       }),
     });
   }, [
-    amountInCents,
     destinationAddress,
     destinationLatitude,
     destinationLongitude,
     driverId,
+    fareInRupees,
     rideTime,
     userAddress,
     userId,
